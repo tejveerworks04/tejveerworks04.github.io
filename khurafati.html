@@ -1,0 +1,604 @@
+<meta charset="utf-8">
+<title>Khurafati T26</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=Martian+Mono:wght@300;400;500&display=swap">
+<style>
+/* Khurafati T26 by Zuno. Viewfinder interface: the whole page behaves like a camera screen. Warm graphite, bone white, sage and sand, a touch of coral. */
+:root{color-scheme:dark;--bg:#0a0c18;--bg2:#0e1120;--card:#141830;--ink:#eceefe;--soft:#8c90ab;--line:rgba(236,238,254,.13);--line2:rgba(236,238,254,.26);--sage:#8ea2ff;--sand:#f2c46d;--coral:#ff7a8a;
+ --sans:'Inter Tight',ui-sans-serif,system-ui,sans-serif;--mono:'Martian Mono',ui-monospace,monospace;--gx:max(18px,env(safe-area-inset-left,0px));--gy:max(18px,env(safe-area-inset-top,0px))}
+*{box-sizing:border-box}[hidden]{display:none!important}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden;line-height:1.55}
+a{color:inherit}h1,h2,h3,p{margin:0}
+:focus-visible{outline:2px solid var(--sage);outline-offset:3px}
+#stage3d{position:fixed;top:0;left:0;width:100%;height:100vh;display:block;z-index:0}
+.mono{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+/* the viewfinder overlay */
+.vf{position:fixed;inset:0;z-index:5;pointer-events:none;transition:opacity .25s}
+.vf::after{content:"";position:absolute;left:0;right:0;bottom:0;height:48vh;background:linear-gradient(rgba(10,12,24,0),rgba(10,12,24,.72));z-index:-1}
+.cn{position:absolute;width:30px;height:30px;border:1.5px solid var(--line2)}
+.cn.a{top:var(--gy);left:var(--gx);border-right:0;border-bottom:0}.cn.b{top:var(--gy);right:var(--gx);border-left:0;border-bottom:0}
+.cn.c{bottom:calc(var(--gy) + env(safe-area-inset-bottom,0px));left:var(--gx);border-right:0;border-top:0}.cn.d{bottom:calc(var(--gy) + env(safe-area-inset-bottom,0px));right:var(--gx);border-left:0;border-top:0}
+.tl{position:absolute;top:calc(var(--gy) + 4px);left:calc(var(--gx) + 6px);display:flex;align-items:center;gap:18px}
+.logo{font-weight:800;font-size:clamp(40px,4.6vw,64px);letter-spacing:-.055em;line-height:.9;text-decoration:none;pointer-events:auto;color:#eceefe;text-shadow:0 0 14px rgba(242,196,109,.75),0 0 34px rgba(242,196,109,.45),0 0 70px rgba(142,162,255,.3)}
+.rec{display:flex;align-items:center;gap:8px;color:var(--soft)}
+.rec i{width:7px;height:7px;border-radius:50%;background:var(--coral);animation:bl 1.6s steps(1) infinite}
+@keyframes bl{50%{opacity:.15}}
+.vf{contain:strict}
+.tr{position:absolute;top:calc(var(--gy) + 6px);right:calc(var(--gx) + 14px);display:flex;align-items:center;gap:16px;color:var(--soft)}
+.bat{display:flex;align-items:center;gap:7px}.bat span{width:24px;height:11px;border:1.2px solid var(--soft);border-radius:3px;position:relative;padding:1.5px}.bat span::before{content:"";display:block;height:100%;width:82%;background:var(--sage);border-radius:1px}.bat span::after{content:"";position:absolute;right:-4px;top:3px;width:2px;height:4px;background:var(--soft);border-radius:1px}
+.pre{pointer-events:auto;text-decoration:none;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--bg);background:var(--ink);padding:9px 14px;border-radius:999px}
+.ret{position:absolute;left:50%;top:var(--rt,44%);width:var(--rs,128px);height:var(--rs,128px);transform:translate(-50%,-50%);transition:width .5s cubic-bezier(.2,.8,.2,1),height .5s cubic-bezier(.2,.8,.2,1)}
+.ret b{position:absolute;width:14px;height:14px;border:1.5px solid var(--ink);opacity:.8;transition:border-color .3s}
+.ret b:nth-child(1){top:0;left:0;border-right:0;border-bottom:0}.ret b:nth-child(2){top:0;right:0;border-left:0;border-bottom:0}.ret b:nth-child(3){bottom:0;left:0;border-right:0;border-top:0}.ret b:nth-child(4){bottom:0;right:0;border-left:0;border-top:0}
+.ret small{position:absolute;left:50%;top:calc(100% + 10px);transform:translateX(-50%);white-space:nowrap;color:var(--soft);transition:color .3s}
+.ret.lock{--rs:92px}.ret.lock b{border-color:var(--sage);opacity:1}.ret.lock small{color:var(--sage)}
+.bar{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(var(--gy) + 10px + env(safe-area-inset-bottom,0px));display:flex;gap:clamp(14px,3vw,34px);color:var(--soft);white-space:nowrap}
+.bar span b{color:var(--ink);font-weight:400;margin-left:6px;font-variant-numeric:tabular-nums}
+.bar span.hot b{color:var(--sand)}
+/* ---------- layout: text and 3D each get their own zone ----------
+   wide screens: text column on the left, 3D on the right (camera view offset in the scene)
+   tall screens: 3D on top, text anchored at the bottom over a soft fade */
+.story{position:relative;z-index:6;pointer-events:none;overflow-x:clip}
+.name::before{inset:-30% 0!important}
+.st{min-height:100vh;display:flex;align-items:center;padding:clamp(90px,12vh,140px) var(--gx) clamp(60px,9vh,110px) max(var(--gx),6vw)}
+.panel{pointer-events:auto;width:min(44vw,640px);display:flex;flex-direction:column;gap:clamp(10px,1.6vh,18px);will-change:opacity,transform}
+.eyebrow{font-family:var(--mono);font-size:clamp(11px,min(.9vw,1.7vh),14px);letter-spacing:.14em;text-transform:uppercase;color:var(--sage)}
+.panel h1,.panel h2{font-weight:650;letter-spacing:-.04em;line-height:1;font-size:clamp(34px,min(4.6vw,8.4vh),84px);text-wrap:balance;margin:0}
+.panel h1 em,.panel h2 em{font-style:normal;color:var(--sand)}
+.panel p{color:#b4b8d0;font-size:clamp(15.5px,min(1.25vw,2.3vh),21px);line-height:1.55;max-width:36em;text-wrap:pretty}
+.big{font-weight:700;letter-spacing:-.05em;line-height:.92;font-size:clamp(56px,min(8.4vw,15vh),150px);font-variant-numeric:tabular-nums}
+.big small{font-size:.32em;letter-spacing:-.01em;margin-left:.25em;color:var(--sand);text-shadow:none;font-weight:600}
+.big.word{font-size:clamp(42px,min(5.8vw,10.5vh),104px)}
+.facts{display:flex;flex-wrap:wrap;gap:14px 0;margin-top:8px;max-width:38em}
+.facts span{position:relative;padding:18px 26px 0 0;font-family:var(--mono);font-size:clamp(11px,min(.85vw,1.6vh),13.5px);letter-spacing:.05em;color:var(--ink);white-space:nowrap}
+.facts span::before{content:"";position:absolute;left:0;top:0;width:8px;height:8px;border-radius:50%;background:var(--sand);box-shadow:0 0 10px 2px rgba(242,196,109,.55)}
+.facts span::after{content:"";position:absolute;left:14px;right:6px;top:3.5px;height:1px;background:linear-gradient(90deg,rgba(242,196,109,.7),rgba(142,162,255,.25))}
+.facts span:last-child::after{background:linear-gradient(90deg,rgba(242,196,109,.6),transparent)}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+.btn{display:inline-flex;align-items:center;justify-content:center;border:0;cursor:pointer;font:inherit;font-weight:600;font-size:clamp(14px,min(1.05vw,2vh),17px);padding:.9em 1.7em;border-radius:999px;text-decoration:none;transition:transform .15s}
+.btn:hover{transform:translateY(-2px)}.btn.s{background:var(--sage);color:#0f160e}.btn.g{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1.3px var(--line2)}
+.glow{color:var(--ink);text-shadow:0 0 18px rgba(242,196,109,.5),0 0 46px rgba(242,196,109,.3),0 0 90px rgba(142,162,255,.2)}
+.name{display:flex;flex-direction:column;gap:6px;position:relative}
+.name::before{content:"";position:absolute;inset:-30% -10%;background:radial-gradient(closest-side,rgba(242,196,109,.2),rgba(142,162,255,.07) 60%,transparent);z-index:-1}
+.name b{font-weight:800;letter-spacing:-.05em;font-size:clamp(46px,min(7vw,12.5vh),124px);line-height:.95}
+/* readable text over the 3D: gentle fade on the text side only */
+.vf::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(10,12,24,.82),rgba(10,12,24,.45) 38%,rgba(10,12,24,0) 58%);z-index:-1}
+@media (max-aspect-ratio:9/10){
+ .st{align-items:flex-end;padding:0 var(--gx) calc(28px + env(safe-area-inset-bottom,0px))}
+ .panel{width:100%;max-width:640px;margin:0 auto;gap:10px}
+ .panel h1,.panel h2{font-size:clamp(30px,8.2vw,60px)}
+ .panel p{font-size:clamp(15px,3.9vw,21px)}
+ .big{font-size:clamp(50px,15vw,96px)}.big.word{font-size:clamp(38px,10.5vw,68px)}
+ .name b{font-size:clamp(40px,12.5vw,80px)}
+ .facts span{font-size:clamp(10.5px,2.8vw,12.5px);padding:16px 20px 0 0}
+ .vf::after{background:linear-gradient(180deg,rgba(10,12,24,0) 44%,rgba(10,12,24,.8) 60%,rgba(10,12,24,.95))}
+ .tl .rec,.tr .bat{display:none}}
+/* part labels for the opened back */
+#parts{position:fixed;inset:0;z-index:5;pointer-events:none;visibility:hidden;overflow:hidden}
+.lbl{position:absolute;left:0;top:0;display:flex;align-items:center;gap:8px;white-space:nowrap;will-change:transform,opacity;opacity:0}
+.lbl i{width:9px;height:9px;border-radius:50%;background:var(--ink);box-shadow:0 0 0 3px rgba(10,12,24,.6),0 0 12px rgba(236,238,254,.6);margin-left:-4.5px;flex:none}
+.lbl span{font-family:var(--mono);font-size:clamp(10px,.85vw,12.5px);letter-spacing:.05em;color:var(--ink);background:rgba(10,12,24,.78);border:1px solid var(--line2);padding:5px 9px;border-radius:999px}
+.lbl.hot i{background:#ff5a5f;box-shadow:0 0 0 3px rgba(10,12,24,.6),0 0 16px rgba(255,90,95,.9)}.lbl.hot span{border-color:rgba(255,90,95,.6)}
+/* ---------- below the story: centred, roomy sections ---------- */
+.rest{position:relative;z-index:7;background:var(--bg2);overflow:hidden}
+.blk{padding:clamp(70px,11vh,130px) var(--gx)}
+.w{max-width:1120px;margin:0 auto}
+.sh{display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px;margin:0 auto clamp(30px,5vh,56px);max-width:760px}
+.sh .mono{color:var(--sage);font-size:clamp(11px,.9vw,13px);letter-spacing:.14em}
+.sh h2{font-size:clamp(32px,min(4.6vw,8vh),72px);font-weight:650;letter-spacing:-.04em;line-height:1.02;margin:0}
+.sh p{color:#b4b8d0;font-size:clamp(15px,1.2vw,19px)}
+.msg{min-height:1.4em;color:var(--sage);font-size:14px}
+.sw{display:flex;gap:12px;flex-wrap:wrap;margin-top:4px}
+.sw button{width:clamp(40px,3.4vw,52px);height:clamp(40px,3.4vw,52px);border-radius:50%;border:0;cursor:pointer;background:linear-gradient(145deg,var(--a),var(--b));box-shadow:0 0 0 2px var(--bg),0 0 0 3px transparent;transition:box-shadow .3s,transform .3s}
+.sw button:hover{transform:scale(1.06)}
+.sw button[aria-pressed=true]{box-shadow:0 0 0 3px var(--bg),0 0 0 5px var(--a),0 0 26px 2px var(--a)}
+.cname{font-size:clamp(18px,1.5vw,24px);font-weight:600;letter-spacing:-.02em;min-height:1.3em}
+/* ---------- storage slider: one track, three stops, price counts to the new value ---------- */
+.picker{max-width:760px;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:clamp(22px,4vh,36px);text-align:center}
+.pz{display:flex;flex-direction:column;align-items:center;gap:6px}
+.pz .mono{color:var(--soft)}
+.pz b{font-size:clamp(56px,min(8vw,14vh),120px);font-weight:700;letter-spacing:-.05em;line-height:1;font-variant-numeric:tabular-nums}
+.pz .cap{font-size:clamp(16px,1.4vw,21px);color:var(--sand)}
+.track{position:relative;width:100%;height:64px;touch-action:none;cursor:pointer}
+.track .rail{position:absolute;left:6%;right:6%;top:22px;height:4px;border-radius:2px;background:var(--line2)}
+.track .fill{position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:linear-gradient(90deg,var(--sage),var(--sand));box-shadow:0 0 14px rgba(242,196,109,.6);transition:width .6s cubic-bezier(.65,0,.35,1)}
+.track .knob{position:absolute;top:24px;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;background:var(--ink);box-shadow:0 0 0 6px rgba(242,196,109,.22),0 0 24px 4px rgba(242,196,109,.55);transition:left .6s cubic-bezier(.65,0,.35,1)}
+.track.drag .knob,.track.drag .fill{transition:none}
+.stop{position:absolute;top:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:0;padding-top:42px;border:0;background:transparent;color:var(--soft);font:inherit;cursor:pointer;white-space:nowrap}
+.stop::before{content:"";position:absolute;top:18px;width:12px;height:12px;border-radius:50%;background:var(--bg2);border:2px solid var(--line2);transition:border-color .3s}
+.stop b{font-size:clamp(15px,1.3vw,19px);font-weight:600}.stop small{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em}
+.stop[aria-pressed=true]{color:var(--ink)}.stop[aria-pressed=true]::before{border-color:var(--sand)}
+.perks{display:flex;flex-wrap:wrap;justify-content:center;gap:14px 0;min-height:40px}
+.perks span{position:relative;padding:18px 28px 0 0;font-size:15px;color:var(--ink);white-space:nowrap}
+.perks span::before{content:"";position:absolute;left:0;top:0;width:8px;height:8px;border-radius:50%;background:var(--sage);box-shadow:0 0 10px 2px rgba(142,162,255,.55)}
+.perks span::after{content:"";position:absolute;left:14px;right:6px;top:3.5px;height:1px;background:linear-gradient(90deg,rgba(142,162,255,.7),rgba(242,196,109,.25))}
+.perks span:last-child{padding-right:0}.perks span:last-child::after{right:-20px;background:linear-gradient(90deg,rgba(142,162,255,.6),transparent)}
+.pop{color:var(--bg);background:var(--sage);padding:5px 10px;border-radius:999px;font-size:10px;font-family:var(--mono);letter-spacing:.08em;text-transform:uppercase;transition:opacity .3s}
+.buyrow{display:flex;flex-direction:column;align-items:center;gap:10px}
+.buyrow{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-top:26px}
+/* after the story */
+.rest{position:relative;z-index:7;background:var(--bg2);overflow:hidden}
+.blk{padding:96px max(18px,env(safe-area-inset-left,0px));}
+.w{max-width:1120px;margin:0 auto}
+.sh{display:flex;flex-direction:column;gap:12px;margin-bottom:38px}
+.sh .mono{color:var(--sage)}
+.sh h2{font-size:clamp(32px,5.4vw,72px);font-weight:600;letter-spacing:-.045em;line-height:1}
+.buy{display:grid;grid-template-columns:1fr 1fr;gap:30px;align-items:center;border:1px solid var(--line);border-radius:24px;padding:clamp(22px,4vw,46px);background:var(--card)}
+@media(max-width:820px){.buy{grid-template-columns:1fr}}
+.seg{display:inline-flex;border:1px solid var(--line2);border-radius:999px;padding:4px;gap:4px;flex-wrap:wrap}
+.seg button{border:0;background:transparent;color:var(--soft);font-family:var(--mono);font-size:12px;letter-spacing:.06em;padding:10px 14px;border-radius:999px;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
+.price{font-size:clamp(42px,6vw,66px);font-weight:600;letter-spacing:-.05em;line-height:1}
+.msg{min-height:1.4em;color:var(--sage);font-size:14px}
+footer{border-top:1px solid var(--line);padding:26px max(18px,env(safe-area-inset-left,0px));color:var(--soft);font-size:13px}
+footer .w{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.no3d #stage3d{display:none}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none!important;transition:none!important}}
+
+/* ---------- gallery: an asymmetric photo spread with gentle parallax and a viewfinder on hover ---------- */
+.spread{display:grid;grid-template-columns:1.25fr 1fr 1fr;grid-template-rows:auto auto;gap:clamp(14px,2vw,26px);align-items:start}
+.shot{position:relative;margin:0;display:flex;flex-direction:column;gap:12px;min-width:0;will-change:transform}
+.shot .ph{position:relative;overflow:hidden;border-radius:6px;background:var(--card)}
+.shot canvas{display:block;width:100%;transition:transform 1.2s cubic-bezier(.2,.8,.2,1)}
+.shot.a{grid-row:span 2}.shot.a canvas{aspect-ratio:3/4}
+.shot.b{grid-column:span 2}.shot.b canvas{aspect-ratio:16/8}
+.shot.c canvas,.shot.d canvas{aspect-ratio:4/5}
+.shot.d{margin-top:clamp(20px,5vw,70px)}
+.shot .vfo{position:absolute;inset:14px;pointer-events:none;opacity:0;transition:opacity .4s}
+.shot .vfo i{display:none;position:absolute;width:18px;height:18px;border:1.5px solid rgba(255,255,255,.9)}
+.shot .vfo i:nth-child(1){top:0;left:0;border-right:0;border-bottom:0}.shot .vfo i:nth-child(2){top:0;right:0;border-left:0;border-bottom:0}
+.shot .vfo i:nth-child(3){bottom:0;left:0;border-right:0;border-top:0}.shot .vfo i:nth-child(4){bottom:0;right:0;border-left:0;border-top:0}
+.shot .vfo span{position:absolute;left:12px;bottom:10px;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.6)}
+.shot:hover canvas{transform:scale(1.04)}.shot:hover .vfo,.shot.on .vfo{opacity:1}
+.shot figcaption{display:flex;align-items:baseline;gap:12px}
+.shot figcaption em{font-style:normal;font-family:var(--mono);font-size:11px;color:var(--sand)}
+.shot figcaption b{font-weight:500;font-size:clamp(15px,1.2vw,18px)}
+.shot figcaption span{margin-left:auto;font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--soft)}
+@media(max-width:820px){.spread{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:78%;grid-template-rows:none;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 calc(-1*var(--gx));padding:0 var(--gx) 6px;scrollbar-width:none}
+ .spread::-webkit-scrollbar{display:none}.shot{scroll-snap-align:center;grid-row:auto!important;grid-column:auto!important;margin-top:0!important;transform:none!important}.shot canvas{aspect-ratio:4/5!important}}
+.swipe{display:none;justify-content:center;gap:8px;margin-top:18px}.swipe i{width:6px;height:6px;border-radius:50%;background:var(--line2);transition:all .3s}.swipe i.on{width:20px;border-radius:3px;background:var(--sand)}
+@media(max-width:820px){.swipe{display:flex}}
+/* ---------- contact: big typographic lines, no boxes ---------- */
+.reach{border-top:1px solid var(--line2)}
+.reach a,.reach div.ln{display:grid;grid-template-columns:minmax(90px,180px) 1fr auto;align-items:center;gap:clamp(14px,3vw,40px);padding:clamp(20px,3.4vh,34px) 0;border-bottom:1px solid var(--line2);text-decoration:none;position:relative}
+.reach a::after{content:"";position:absolute;left:0;bottom:-1px;height:1px;width:100%;background:linear-gradient(90deg,var(--sand),var(--sage));transform:scaleX(0);transform-origin:left;transition:transform .6s cubic-bezier(.2,.8,.2,1)}
+.reach a:hover::after,.reach a:focus-visible::after{transform:scaleX(1)}
+.reach .k{font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--sage)}
+.reach .v{font-size:clamp(24px,4.2vw,58px);font-weight:600;letter-spacing:-.04em;line-height:1.05;overflow-wrap:anywhere;transition:color .3s}
+.reach a:hover .v{color:var(--sand)}
+.reach .n{font-size:14px;color:var(--soft);text-align:right;white-space:nowrap}
+.reach .arr{display:inline-block;margin-left:10px;transition:transform .4s;color:var(--sand)}.reach a:hover .arr{transform:translate(4px,-4px)}
+.open{display:inline-flex;align-items:center;gap:8px}.open i{width:8px;height:8px;border-radius:50%;background:var(--sage);box-shadow:0 0 0 0 rgba(142,162,255,.6);animation:pl 2.4s infinite}
+@keyframes pl{70%{box-shadow:0 0 0 9px rgba(142,162,255,0)}100%{box-shadow:0 0 0 0 rgba(142,162,255,0)}}
+@media(max-width:700px){.reach a,.reach div.ln{grid-template-columns:1fr;gap:6px}.reach .n{text-align:left;white-space:normal}}
+.signoff{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;margin-top:clamp(36px,6vh,64px)}
+.signoff b{font-size:clamp(46px,9vw,140px);font-weight:800;letter-spacing:-.06em;line-height:.85;color:var(--ink);opacity:.95}
+.signoff p{color:var(--soft);font-size:13px;max-width:22em}
+</style>
+<canvas id="stage3d" role="img" aria-label="Camera lens rings coming into focus, forming a tunnel, and landing on the Khurafati T26 phone"></canvas>
+<div class="vf" id="vf" aria-hidden="true">
+ <div class="tl"><a class="logo" href="#top">zuno</a><span class="rec mono"><i></i><span id="tc">00:00:00</span></span></div>
+ <div class="tr"><span class="bat mono"><span></span></span><a class="pre" href="#buy">Pre-order</a></div>
+</div>
+<div id="parts" aria-hidden="true"></div>
+<main class="story" id="top">
+ <section class="st hero"><div class="panel"><div class="name"><span class="eyebrow">New · by Zuno</span><b class="glow">Khurafati T26</b></div><h1>Thoda khurafati. <em class="glow" style="color:var(--sand)">Poora flagship smartphone.</em></h1><p>A little mischievous, a lot powerful. A 200 MP camera, a silky 120 Hz screen and flagship speed, wrapped in a body that still slips into your pocket.</p><div class="row"><a class="btn g" href="#buy">See prices</a></div></div></section>
+ <section class="st"><div class="panel"><span class="eyebrow">Smoothness</span><div class="big glow">120<small>Hz</small></div><h2>Smooth as it <em>gets.</em></h2><p>The 6.7 inch AMOLED screen refreshes up to 120 times every second, so scrolling, swiping and gaming feel effortless. When you are just reading, it slows right down to save battery.</p><div class="facts"><span>Adaptive 1–120 Hz</span><span>240 Hz touch</span><span>HDR10+</span></div></div></section>
+ <section class="st"><div class="panel"><span class="eyebrow">Camera</span><div class="big glow">200<small>MP</small></div><h2>Zoom in. Then zoom in <em>again.</em></h2><p>A 200 MP main sensor catches so much detail that you can crop a group photo into a portrait. Night mode pulls light out of dark streets, and 30× zoom brings the stage right up close.</p><div class="facts"><span>200 MP main</span><span>12 MP ultra-wide</span><span>30× zoom</span><span>4K 60 video</span></div></div></section>
+ <section class="st"><div class="panel"><span class="eyebrow">Sound</span><div class="big word glow">Dolby Atmos</div><h2>Sound that surrounds <em>you.</em></h2><p>Two stereo speakers tuned with Dolby Atmos spread sound left, right and all around you. Films feel bigger, songs feel closer, and in games you can tell exactly where the footsteps are coming from.</p><div class="facts"><span>Dual stereo speakers</span><span>Dolby Atmos</span><span>Hi-Res audio</span></div></div></section>
+ <section class="st"><div class="panel"><span class="eyebrow">Display</span><div class="big glow">1.2<small>mm bezels</small></div><h2>All screen. Almost no <em>border.</em></h2><p>With bezels just 1.2 mm thin on every side, the picture runs right to the edges. A peak brightness of 2,400 nits keeps everything clear, even under the afternoon sun.</p><div class="facts"><span>6.7 inch AMOLED</span><span>2,400 nits</span><span>1.2 mm bezels</span></div></div></section>
+ <section class="st"><div class="panel"><span class="eyebrow">Processor</span><div class="big word glow">Snapdragon 8 Elite</div><h2>Flagship power. Cool under <em>pressure.</em></h2><p>Open it up and you will find the Snapdragon 8 Elite at its heart, a large vapour chamber that keeps it cool, and a 5,500 mAh battery that lasts all day. Every part is packed tight, so the phone stays slim.</p><div class="facts"><span>3 nm chip</span><span>Vapour cooling</span><span>5,500 mAh</span><span>100 W charging</span></div></div></section>
+ <section class="st"><div class="panel"><span class="eyebrow">Memory</span><div class="big glow">12<small>GB RAM</small></div><h2>Fifty apps open. Zero <em>reloads.</em></h2><p>12 GB of RAM keeps your chats, camera, games and videos running side by side. Jump back into any app and it is exactly where you left it, with no reloading and no waiting.</p><div class="facts"><span>12 GB RAM</span><span>Up to 512 GB</span><span>UFS 4.0 storage</span></div></div></section>
+ <section class="st"><div class="panel"><span class="eyebrow">Colours</span><h2>Pick your <em class="glow" style="color:var(--sand)">shade.</em></h2><p>Four finishes, each with a soft matte glass back that hides fingerprints and feels great in the hand. Tap a colour and watch the phone turn.</p><div class="sw" role="group" aria-label="Colour"><button type="button" aria-pressed="true" data-i="0" data-n="Midnight Graphite" style="--a:#5a5d55;--b:#1b1c1a" aria-label="Midnight Graphite"></button><button type="button" aria-pressed="false" data-i="1" data-n="Sage Green" style="--a:#a8c3a0;--b:#5f7a58" aria-label="Sage Green"></button><button type="button" aria-pressed="false" data-i="2" data-n="Desert Sand" style="--a:#d8b98a;--b:#9c7a4c" aria-label="Desert Sand"></button><button type="button" aria-pressed="false" data-i="3" data-n="Coral Red" style="--a:#e07a5f;--b:#a3452f" aria-label="Coral Red"></button></div><span class="cname glow" id="cname">Midnight Graphite</span></div></section>
+</main>
+<div class="rest">
+ <section class="blk" id="buy"><div class="w"><div class="sh"><span class="mono">Khurafati T26 · Price</span><h2>Choose your <span class="glow" style="color:var(--sand)">storage.</span></h2><p>Slide or tap. Every model has the same camera, screen and chip.</p></div>
+  <div class="picker">
+   <div class="pz"><span class="pop" id="pop">Most popular</span><b class="glow" id="dp">₹32,999</b><span class="cap" id="dc">12 GB RAM + 256 GB</span></div>
+   <div class="track" id="track" role="group" aria-label="Storage">
+    <div class="rail"><div class="fill" id="fill"></div></div><div class="knob" id="knob"></div>
+    <button type="button" class="stop" data-i="0" style="left:6%" aria-pressed="false"><b>128 GB</b><small>8 GB RAM</small></button>
+    <button type="button" class="stop" data-i="1" style="left:50%" aria-pressed="true"><b>256 GB</b><small>12 GB RAM</small></button>
+    <button type="button" class="stop" data-i="2" style="left:94%" aria-pressed="false"><b>512 GB</b><small>12 GB RAM</small></button>
+   </div>
+   <div class="perks" id="perks"></div>
+   <div class="buyrow"><button class="btn s" type="button" id="ord">Pre-order Khurafati T26</button><p class="msg" id="msg" role="status"></p></div>
+  </div></div></section>
+ <section class="blk" id="gallery" style="padding-top:0"><div class="w"><div class="sh"><span class="mono">Gallery · Unedited</span><h2>Straight out of the <span class="glow" style="color:var(--sand)">camera.</span></h2><p>No filters, no edits. Just point, tap and keep.</p></div>
+  <div class="spread" id="spread">
+   <figure class="shot a" data-p="-.06"><div class="ph"><canvas data-shot="sunset"></canvas><div class="vfo"><span>PHOTO · 1×</span></div></div><figcaption><em>01</em><b>Upper Lake, 6:12 PM</b><span>Photo</span></figcaption></figure>
+   <figure class="shot b" data-p=".05"><div class="ph"><canvas data-shot="night"></canvas><div class="vfo"><span>NIGHT · 1×</span></div></div><figcaption><em>02</em><b>Old City after dark</b><span>Night mode</span></figcaption></figure>
+   <figure class="shot c" data-p=".1"><div class="ph"><canvas data-shot="moon"></canvas><div class="vfo"><span>ZOOM · 30×</span></div></div><figcaption><em>03</em><b>Terrace moon</b><span>30× zoom</span></figcaption></figure>
+   <figure class="shot d" data-p=".16"><div class="ph"><canvas data-shot="portrait"></canvas><div class="vfo"><span>PORTRAIT · 2×</span></div></div><figcaption><em>04</em><b>Diwali portrait</b><span>Portrait</span></figcaption></figure>
+  </div><div class="swipe" id="swipe" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i></div></div></section>
+ <section class="blk" id="contact" style="padding-top:0"><div class="w"><div class="sh"><span class="mono">Contact</span><h2>Questions? <span class="glow" style="color:var(--sand)">Talk to us.</span></h2></div>
+  <div class="reach">
+   <a href="tel:+919876543210"><span class="k">Call</span><span class="v">+91 98765 43210<span class="arr">↗</span></span><span class="n"><span class="open"><i></i>Mon to Sat, 10 AM to 7 PM</span></span></a>
+   <a href="mailto:hello@zunomobile.example"><span class="k">Email</span><span class="v">hello@zunomobile.example<span class="arr">↗</span></span><span class="n">Reply within a day</span></a>
+   <div class="ln"><span class="k">Visit</span><span class="v">MP Nagar, Bhopal</span><span class="n">Zuno Studio, Madhya Pradesh</span></div>
+  </div>
+  <div class="signoff"><b>zuno.</b><p class="mono">Demo contact details for this concept site.</p></div></div></section>
+ <footer><div class="w"><span>© 2026 Zuno Mobile · Khurafati T26 is a concept by Tejveer · Made in Bhopal</span><span>Demo site, no real orders.</span></div></footer>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>/* Shared 3D helpers for the Khurafati T26 site.
+   Smoothness: canvas is sized once to the large viewport (no jumps when the mobile URL bar moves),
+   scroll progress is eased with a time-based damper, and work is skipped when the story is off-screen. */
+window.V=(function(){
+const still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
+const ss=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t);};
+const ease=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;};
+const lerp=(a,b,t)=>a+(b-a)*t;
+function rr(w,h,r){const s=new THREE.Shape(),x=-w/2,y=-h/2;s.moveTo(x+r,y);s.lineTo(x+w-r,y);s.quadraticCurveTo(x+w,y,x+w,y+r);s.lineTo(x+w,y+h-r);s.quadraticCurveTo(x+w,y+h,x+w-r,y+h);s.lineTo(x+r,y+h);s.quadraticCurveTo(x,y+h,x,y+h-r);s.lineTo(x,y+r);s.quadraticCurveTo(x,y,x+r,y);return s;}
+function rrc(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();}
+function ready(fonts,cb){let done=false;const go=()=>{if(!done){done=true;cb();}};
+ try{Promise.all(fonts.map(f=>document.fonts.load(f))).then(go,go);}catch(e){go();}setTimeout(go,1500);}
+const lin=h=>new THREE.Color(h).convertSRGBToLinear();
+function init(o){
+ const cv=document.getElementById('stage3d');let r;
+ try{r=new THREE.WebGLRenderer({canvas:cv,antialias:true,powerPreference:'high-performance'});if(!r.getContext())throw 0;}catch(e){document.body.classList.add('no3d');return null;}
+ r.setPixelRatio(Math.min(devicePixelRatio||1,o.maxPR||1.75));r.setClearColor(o.bg,1);r.outputEncoding=THREE.sRGBEncoding;
+ const scene=new THREE.Scene();if(o.fog)scene.fog=new THREE.Fog(o.bg,o.fog[0],o.fog[1]);
+ const cam=new THREE.PerspectiveCamera(o.fov||35,1,.1,300);
+ const pm=new THREE.PMREMGenerator(r),es=new THREE.Scene();
+ es.add(new THREE.Mesh(new THREE.BoxGeometry(20,20,20),new THREE.MeshBasicMaterial({color:o.envBase||0x26262c,side:THREE.BackSide})));
+ const lp=(c,x,y,z,sx,sy)=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(sx,sy),new THREE.MeshBasicMaterial({color:c,side:THREE.DoubleSide}));m.position.set(x,y,z);m.lookAt(0,0,0);es.add(m);};
+ lp(0xffffff,0,9,0,12,4);lp(0xffffff,-9,2,3,3,10);lp(o.envTint||0xffffff,9,1,-2,3,8);lp(0xbbbbbb,0,1,9.5,10,2);
+ scene.environment=pm.fromScene(es,.04).texture;pm.dispose();
+ scene.add(new THREE.HemisphereLight(o.sky||0xffffff,o.ground||0x444450,o.hemi??.55));
+ const key=new THREE.DirectionalLight(0xffffff,o.key??1.1);key.position.set(4,7,9);scene.add(key);
+ const rim=new THREE.DirectionalLight(o.rim||0xffffff,o.rimI??.9);rim.position.set(-7,2,-6);scene.add(rim);
+ const S={r,scene,cam,W:1,H:1,mob:false,still,cv,sec:1};
+ let lw=0,lh=0;const st=document.querySelector('.st');
+ const size=()=>{const w=cv.clientWidth,h=cv.clientHeight;S.sec=st?st.offsetHeight:h;if(w===lw&&h===lh)return;lw=w;lh=h;
+  S.W=w;S.H=h;r.setSize(w,h,false);cam.aspect=w/h;S.mob=w/h<.9;cam.updateProjectionMatrix();S.onSize&&S.onSize();};
+ addEventListener('resize',size);size();S.size=size;return S;}
+function loop(S,fn){let t=0,last=performance.now(),k=null,vel=0,acc=0,n=0,lowT=0;
+ const pr0=S.r.getPixelRatio();let pr=pr0;
+ const f=now=>{const raw=Math.min(.1,(now-last)/1000);last=now;const dt=Math.min(.034,raw);if(!S.still)t+=dt;
+  const tk=scrollY/S.sec;
+  if(k===null||S.still){k=tk;vel=0;}
+  else if(S.spring){/* critically damped spring: eases in and out, never snaps; sub-stepped for stability */
+   let left=raw;while(left>1e-4){const h=Math.min(left,1/120);left-=h;const w=S.spring(k),vm=S.vmax?S.vmax(k):99;
+    let ac=w*w*(tk-k)-2*w*vel;const am=S.amax?S.amax(k):99;if(ac>am)ac=am;else if(ac<-am)ac=-am;vel+=ac*h;if(vel>vm)vel=vm;else if(vel<-vm)vel=-vm;k+=vel*h;}}
+  else k=k+(tk-k)*(1-Math.exp(-dt*(S.damp||7.5)));
+  /* adaptive quality: if frames are slow for a while, render fewer pixels */
+  acc+=raw;n++;if(acc>1.2){const avg=acc/n;acc=0;n=0;
+   if(avg>.024&&pr>1){pr=Math.max(1,pr-.25);S.r.setPixelRatio(pr);S.r.setSize(S.W,S.H,false);S.onPR&&S.onPR(pr);}
+   else if(avg<.0145&&pr<pr0){lowT++;if(lowT>4){lowT=0;pr=Math.min(pr0,pr+.25);S.r.setPixelRatio(pr);S.r.setSize(S.W,S.H,false);S.onPR&&S.onPR(pr);}}}
+  if(k<(S.maxK||4.6)||S.still){fn(t,k,dt);S.r.render(S.scene,S.cam);}
+  if(!S.still)requestAnimationFrame(f);};
+ requestAnimationFrame(f);if(S.still)addEventListener('scroll',()=>requestAnimationFrame(f),{passive:true});}
+
+/* phone: matte back, polished metal frame, live screen */
+const PW=.8,PH=1.68,PD=.09;let PG,SG,MG,LG,GG;
+function screenTex(col,draw){const c=document.createElement('canvas');c.width=360;c.height=756;const g=c.getContext('2d');
+ if(draw)draw(g,360,756);else{
+ g.fillStyle='#0a0a0d';g.fillRect(0,0,360,756);
+ let rg=g.createRadialGradient(260,560,10,260,560,420);rg.addColorStop(0,col[0]);rg.addColorStop(.45,col[1]);rg.addColorStop(1,'rgba(10,10,13,0)');g.globalAlpha=.95;g.fillStyle=rg;g.fillRect(0,0,360,756);
+ rg=g.createRadialGradient(40,300,10,40,300,260);rg.addColorStop(0,col[1]);rg.addColorStop(1,'rgba(10,10,13,0)');g.globalAlpha=.6;g.fillStyle=rg;g.fillRect(0,0,360,756);g.globalAlpha=1;
+ g.fillStyle='#fff';g.textAlign='center';g.font='300 118px Helvetica,Arial,sans-serif';g.fillText('7:30',180,226);
+ g.font='500 21px Helvetica,Arial,sans-serif';g.globalAlpha=.75;g.fillText('Monday, 2 November',180,268);g.globalAlpha=1;
+ for(let i=0;i<4;i++){g.fillStyle='rgba(255,255,255,.18)';rrc(g,40+i*75,664,56,56,17);g.fill();}}
+ g.fillStyle='#000';g.beginPath();g.arc(180,34,11,0,7);g.fill();
+ g.fillStyle='rgba(255,255,255,.4)';rrc(g,130,734,100,6,3);g.fill();
+ const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.anisotropy=4;t.repeat.set(1/(PW-.022),1/(PH-.022));t.offset.set(.5,.5);return t;}
+function phone(o){const g=new THREE.Group();
+ if(!PG){PG=new THREE.ExtrudeGeometry(rr(PW,PH,.11),{depth:PD,bevelEnabled:true,bevelThickness:.014,bevelSize:.012,bevelSegments:2,curveSegments:12});PG.translate(0,0,-PD/2);
+  SG=new THREE.ShapeGeometry(rr(PW-.022,PH-.022,.1),12);
+  MG=new THREE.ExtrudeGeometry(rr(.36,.52,.1),{depth:.025,bevelEnabled:true,bevelThickness:.01,bevelSize:.01,bevelSegments:2,curveSegments:8});
+  LG=new THREE.CylinderGeometry(.078,.082,.045,36);LG.rotateX(Math.PI/2);GG=new THREE.CircleGeometry(.058,32);}
+ const bodyM=new THREE.MeshStandardMaterial({color:lin(o.col[0]).lerp(lin(o.col[1]),.4),metalness:o.metal??.2,roughness:o.rough??.45});
+ const frameM=new THREE.MeshStandardMaterial({color:lin(o.frame||o.col[0]).lerp(new THREE.Color(1,1,1),.25),metalness:.9,roughness:.2});
+ g.add(new THREE.Mesh(PG,[bodyM,frameM]));
+ const scM=new THREE.MeshBasicMaterial({map:screenTex(o.col,o.screen),toneMapped:false});
+ const sc=new THREE.Mesh(SG,scM);sc.position.z=PD/2+.016;g.add(sc);
+ g.userData={bodyM,frameM,scM,lens:[],lensMeshes:[]};
+ if(o.cam!==false){const modM=new THREE.MeshStandardMaterial({color:lin(o.col[0]).lerp(lin(o.col[1]),.8).multiplyScalar(.75),metalness:.6,roughness:.25});
+  const mod=new THREE.Mesh(MG,modM);mod.rotation.y=Math.PI;mod.position.set(-.15,.5,-PD/2-.024);g.add(mod);g.userData.modM=modM;
+  [[.23,.62],[.23,.38],[.05,.5]].forEach(([x,y])=>{g.userData.lens.push(new THREE.Vector3(-x,y,-PD/2-.075));
+   const l=new THREE.Mesh(LG,new THREE.MeshStandardMaterial({color:0x111114,metalness:.9,roughness:.25}));l.position.set(-x,y,-PD/2-.06);g.add(l);
+   const gl=new THREE.Mesh(GG,new THREE.MeshStandardMaterial({color:0x0b1a2a,metalness:1,roughness:.05}));gl.rotation.y=Math.PI;gl.position.set(-x,y,-PD/2-.084);g.add(gl);
+   g.userData.lensMeshes.push([l,gl]);});}
+ return g;}
+
+/* smooth ribbon bent along any path; frame uses parallel transport so it never flips */
+function band(o){const seg=o.seg||300,w=o.w||.5;
+ const c=document.createElement('canvas'),g=c.getContext('2d');c.width=o.cw||512;c.height=64;o.paint(g,c.width,64);
+ const tf=new THREE.CanvasTexture(c);tf.encoding=THREE.sRGBEncoding;tf.wrapS=THREE.RepeatWrapping;tf.anisotropy=8;
+ const geo=new THREE.PlaneGeometry(1,1,seg,1),pos=geo.attributes.position;
+ const mat=new THREE.MeshStandardMaterial({map:tf,side:THREE.DoubleSide,roughness:o.rough??.3,metalness:o.metal??.1,emissive:0xffffff,emissiveMap:tf,emissiveIntensity:o.glow??.08});
+ const mesh=new THREE.Mesh(geo,mat);mesh.frustumCulled=false;
+ const P=[];for(let i=0;i<=seg;i++)P.push(new THREE.Vector3());
+ const T=new THREE.Vector3(),N=new THREE.Vector3(),B=new THREE.Vector3(),D=new THREE.Vector3(),Np=new THREE.Vector3();
+ return {mesh,mat,P,update(path,twist,ww,ref,rep){for(let i=0;i<=seg;i++)path(i/seg,P[i]);
+   for(let i=0;i<=seg;i++){T.subVectors(P[Math.min(seg,i+1)],P[Math.max(0,i-1)]);if(T.lengthSq()<1e-12)T.set(1,0,0);T.normalize();
+    if(i===0){N.copy(ref);}else N.copy(Np);
+    N.addScaledVector(T,-N.dot(T));if(N.lengthSq()<1e-8){N.set(0,1,0).addScaledVector(T,-T.y);}N.normalize();Np.copy(N);
+    B.crossVectors(T,N);const th=twist(i/seg);D.copy(N).multiplyScalar(Math.cos(th)).addScaledVector(B,Math.sin(th)).multiplyScalar(ww/2);
+    pos.setXYZ(i,P[i].x+D.x,P[i].y+D.y,P[i].z+D.z);pos.setXYZ(seg+1+i,P[i].x-D.x,P[i].y-D.y,P[i].z-D.z);}
+   pos.needsUpdate=true;geo.computeVertexNormals();tf.repeat.x=rep||1;}};}
+
+/* story panels fade with scroll (no pop-in) */
+function panels(){const ps=[...document.querySelectorAll('.panel')],st=document.querySelector('.st');let raf=0;
+ const up=()=>{raf=0;const h=st?st.offsetHeight:innerHeight,k=scrollY/h;
+  ps.forEach((p,i)=>{const d=k-i,a=Math.abs(d),o=i===0&&d<0?1:1-ss(.22,.5,a);p.style.opacity=o.toFixed(3);p.style.transform='translate3d(0,'+(-d*36).toFixed(1)+'px,0)';p.style.visibility=o<.01?'hidden':'visible';});};
+ addEventListener('scroll',()=>{if(!raf)raf=requestAnimationFrame(up);},{passive:true});addEventListener('resize',up);up();}
+return {ss,ease,lerp,clamp,rr,rrc,ready,init,loop,phone,band,panels,lin,PW,PH,PD};
+})();
+</script>
+<script>/* Sample "photos" drawn in code, used on phone screens and in the galleries. All sizes scale with the canvas. */
+window.SHOTS=(function(){
+function rr(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();}
+let seed=3;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
+function sunset(g,w,h){const sky=g.createLinearGradient(0,0,0,h*.62);sky.addColorStop(0,'#2b2148');sky.addColorStop(.55,'#c2667a');sky.addColorStop(1,'#f3b27a');g.fillStyle=sky;g.fillRect(0,0,w,h);
+ g.fillStyle='#ffe7bd';g.beginPath();g.arc(w*.62,h*.5,w*.12,0,7);g.fill();
+ const hill=(y,a,c)=>{g.fillStyle=c;g.beginPath();g.moveTo(0,h);for(let x=0;x<=w;x+=w/60)g.lineTo(x,y+Math.sin(x/(w*a))*h*.024+Math.sin(x/(w*a*.37))*h*.01);g.lineTo(w,h);g.fill();};
+ hill(h*.55,.17,'#7b3d63');hill(h*.6,.12,'#4a2650');
+ const lake=g.createLinearGradient(0,h*.66,0,h);lake.addColorStop(0,'#ef9d78');lake.addColorStop(1,'#1d1331');g.fillStyle=lake;g.fillRect(0,h*.66,w,h);
+ g.fillStyle='rgba(255,231,189,.5)';for(let i=0;i<9;i++)g.fillRect(w*.62-w*.11+((i*37)%(w*.22)),h*.68+i*h*.019,w*.08+((i*19)%(w*.1)),Math.max(2,h*.004));
+ g.fillStyle='#170e24';g.fillRect(0,h*.655,w,h*.008);}
+function night(g,w,h){seed=9;const sky=g.createLinearGradient(0,0,0,h);sky.addColorStop(0,'#0d1424');sky.addColorStop(.6,'#243049');sky.addColorStop(1,'#3a2a2a');g.fillStyle=sky;g.fillRect(0,0,w,h);
+ const base=h*.68;for(let i=0;i<14;i++){const bw=w*(.08+rnd()*.12),bx=(i/14)*w*1.1-w*.05,bh=h*(.18+rnd()*.32);g.fillStyle=i%2?'#141a28':'#1a2030';g.fillRect(bx,base-bh,bw,bh+h);
+  for(let y=base-bh+h*.02;y<base-h*.02;y+=h*.028)for(let x=bx+bw*.12;x<bx+bw*.85;x+=bw*.22)if(rnd()<.45){g.fillStyle=rnd()<.7?'rgba(255,196,120,.85)':'rgba(170,210,255,.7)';g.fillRect(x,y,bw*.1,h*.012);}}
+ g.fillStyle='#16151a';g.fillRect(0,base,w,h);
+ for(let i=0;i<5;i++){const x=w*(.1+i*.22),y=base-h*.12;const rg=g.createRadialGradient(x,y,0,x,y,w*.16);rg.addColorStop(0,'rgba(255,205,140,.9)');rg.addColorStop(.15,'rgba(255,170,90,.35)');rg.addColorStop(1,'rgba(255,170,90,0)');g.fillStyle=rg;g.fillRect(x-w*.2,y-w*.2,w*.4,w*.4);
+  g.fillStyle='rgba(255,190,120,.25)';g.fillRect(x-w*.012,base,w*.024,h*.25);g.fillStyle='#0c0c10';g.fillRect(x-w*.004,y,w*.008,base-y);}
+ g.fillStyle='rgba(224,120,95,.8)';g.fillRect(w*.3,base+h*.1,w*.05,h*.012);g.fillStyle='rgba(255,240,210,.85)';g.fillRect(w*.62,base+h*.14,w*.05,h*.012);}
+function moon(g,w,h){seed=21;g.fillStyle='#07090f';g.fillRect(0,0,w,h);for(let i=0;i<120;i++){g.fillStyle='rgba(255,255,255,'+(.2+rnd()*.6)+')';g.fillRect(rnd()*w,rnd()*h,1.2,1.2);}
+ const cx=w*.55,cy=h*.42,R=Math.min(w,h)*.3;const rg=g.createRadialGradient(cx-R*.3,cy-R*.3,R*.1,cx,cy,R);rg.addColorStop(0,'#f4efe4');rg.addColorStop(1,'#b9b2a4');g.fillStyle=rg;g.beginPath();g.arc(cx,cy,R,0,7);g.fill();
+ for(let i=0;i<16;i++){const a=rnd()*6.28,d=rnd()*R*.8,r=R*(.04+rnd()*.12);g.fillStyle='rgba(120,112,100,'+(.18+rnd()*.25)+')';g.beginPath();g.arc(cx+Math.cos(a)*d,cy+Math.sin(a)*d,r,0,7);g.fill();}
+ const glow=g.createRadialGradient(cx,cy,R,cx,cy,R*1.6);glow.addColorStop(0,'rgba(244,239,228,.18)');glow.addColorStop(1,'rgba(244,239,228,0)');g.fillStyle=glow;g.fillRect(0,0,w,h);}
+function portrait(g,w,h){seed=5;g.fillStyle='#2a1c1e';g.fillRect(0,0,w,h);
+ for(let i=0;i<26;i++){const x=rnd()*w,y=rnd()*h*.8,r=w*(.04+rnd()*.07);const c=['255,190,130','230,140,120','255,225,180','170,190,150'][i%4];const rg=g.createRadialGradient(x,y,0,x,y,r);rg.addColorStop(0,'rgba('+c+',.0)');rg.addColorStop(.75,'rgba('+c+',.35)');rg.addColorStop(1,'rgba('+c+',0)');g.fillStyle=rg;g.beginPath();g.arc(x,y,r,0,7);g.fill();}
+ g.fillStyle='#120c0d';g.beginPath();g.ellipse(w*.5,h*.42,w*.17,h*.13,0,0,7);g.fill();g.beginPath();g.moveTo(w*.12,h);g.quadraticCurveTo(w*.18,h*.6,w*.5,h*.58);g.quadraticCurveTo(w*.82,h*.6,w*.88,h);g.fill();
+ g.strokeStyle='rgba(255,200,150,.55)';g.lineWidth=Math.max(1.5,w*.006);g.beginPath();g.ellipse(w*.5,h*.42,w*.17,h*.13,0,-1.9,-.2);g.stroke();}
+function caption(g,w,h,t1,t2){g.fillStyle='rgba(0,0,0,.35)';rr(g,w*.05,h-h*.13,w*.9,h*.085,w*.055);g.fill();g.fillStyle='#fff';g.font='600 '+Math.round(w*.053)+'px Helvetica,Arial,sans-serif';g.fillText(t1,w*.1,h-h*.083);g.globalAlpha=.7;g.font=Math.round(w*.042)+'px Helvetica,Arial,sans-serif';g.fillText(t2,w*.1,h-h*.056);g.globalAlpha=1;}
+function paintAll(){document.querySelectorAll('canvas[data-shot]').forEach(c=>{const r=c.getBoundingClientRect(),d=Math.min(2,devicePixelRatio||1);c.width=Math.max(200,Math.round(r.width*d));c.height=Math.max(150,Math.round(r.height*d));const g=c.getContext('2d');(SHOTS[c.dataset.shot]||sunset)(g,c.width,c.height);});}
+return {sunset,night,moon,portrait,caption,paintAll};})();
+</script>
+<script>
+(function(){V.panels();SHOTS.paintAll();let rt=0;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(SHOTS.paintAll,200);});
+ const V3=[{p:29999,n:'8 GB RAM + 128 GB',perks:['120 Hz display','200 MP camera','Dolby Atmos'],pop:false},
+  {p:32999,n:'12 GB RAM + 256 GB',perks:['Everything in 128 GB','12 GB RAM','Double the storage'],pop:true},
+  {p:37999,n:'12 GB RAM + 512 GB',perks:['Everything in 256 GB','Space for every photo','Free premium case'],pop:false}];
+ const POS=[6,50,94],stops=[...document.querySelectorAll('.stop')],track=document.getElementById('track'),knob=document.getElementById('knob'),fill=document.getElementById('fill');
+ let vi=1,shown=V3[1].p,tw=0;const fmt=n=>'₹'+Math.round(n).toLocaleString('en-IN');
+ function countTo(v){cancelAnimationFrame(tw);const from=shown,t0=performance.now();const st=n=>{const q=Math.min(1,(n-t0)/650),e=1-Math.pow(1-q,3);shown=from+(v-from)*e;document.getElementById('dp').textContent=fmt(shown);if(q<1)tw=requestAnimationFrame(st);};tw=requestAnimationFrame(st);}
+ function setKnob(pct){knob.style.left=pct+'%';fill.style.width=((pct-6)/88*100)+'%';}
+ function showVar(i){vi=i;const v=V3[i];stops.forEach((o,j)=>o.setAttribute('aria-pressed',j===i));setKnob(POS[i]);countTo(v.p);
+  document.getElementById('dc').textContent=v.n;document.getElementById('pop').style.opacity=v.pop?1:0;
+  document.getElementById('perks').innerHTML=v.perks.map(x=>'<span>'+x+'</span>').join('');document.getElementById('msg').textContent='';}
+ stops.forEach((o,j)=>o.addEventListener('click',e=>{e.stopPropagation();showVar(j);}));
+ let dragging=false;const pctAt=x=>{const r=track.getBoundingClientRect();return Math.max(6,Math.min(94,(x-r.left)/r.width*100));};
+ track.addEventListener('pointerdown',e=>{if(e.target.closest('.stop'))return;dragging=true;track.classList.add('drag');track.setPointerCapture(e.pointerId);setKnob(pctAt(e.clientX));});
+ track.addEventListener('pointermove',e=>{if(dragging)setKnob(pctAt(e.clientX));});
+ const endDrag=e=>{if(!dragging)return;dragging=false;track.classList.remove('drag');const p=pctAt(e.clientX);let best=0;POS.forEach((q,j)=>{if(Math.abs(q-p)<Math.abs(POS[best]-p))best=j;});showVar(best);};
+ track.addEventListener('pointerup',endDrag);track.addEventListener('pointercancel',endDrag);
+ track.addEventListener('keydown',e=>{if(e.key==='ArrowRight'){showVar(Math.min(2,vi+1));e.preventDefault();}if(e.key==='ArrowLeft'){showVar(Math.max(0,vi-1));e.preventDefault();}});
+ showVar(1);document.getElementById('dp').textContent=fmt(V3[1].p);
+ (function(){const sp=document.getElementById('spread'),shots=[...sp.querySelectorAll('.shot')],dots=[...document.querySelectorAll('#swipe i')];let rq=0;
+  const par=()=>{rq=0;if(innerWidth<=820)return;const r=sp.getBoundingClientRect(),c=(r.top+r.height/2-innerHeight/2)/innerHeight;shots.forEach(el=>{el.style.transform='translate3d(0,'+(c*+el.dataset.p*240).toFixed(1)+'px,0)';});};
+  addEventListener('scroll',()=>{if(!rq)rq=requestAnimationFrame(par);},{passive:true});addEventListener('resize',par);par();
+  sp.addEventListener('scroll',()=>{const i=Math.round(sp.scrollLeft/(shots[0].offsetWidth+14));dots.forEach((d,j)=>d.classList.toggle('on',j===i));shots.forEach((el,j)=>el.classList.toggle('on',j===i));},{passive:true});
+  shots.forEach(el=>el.addEventListener('click',()=>el.classList.toggle('on')));})();
+ const cs=[...document.querySelectorAll('.sw button')];let colour='Midnight Graphite';cs.forEach(b=>b.addEventListener('click',()=>{cs.forEach(x=>x.setAttribute('aria-pressed',x===b));colour=b.dataset.n;document.getElementById('cname').textContent=colour;dispatchEvent(new CustomEvent('vf-colour',{detail:+b.dataset.i}));}));
+ document.getElementById('ord').addEventListener('click',()=>{const v=V3[vi];document.getElementById('msg').textContent='Reserved: Khurafati T26 in '+colour+', '+v.n+' for '+fmt(v.p)+'. (Demo only, no payment taken.)';});
+ const $=id=>document.getElementById(id),st=document.querySelector('.st'),vf=$('vf');
+ const ss=(a,b,x)=>{const t=Math.min(1,Math.max(0,(x-a)/(b-a)));return t*t*(3-2*t);};
+ let raf=0,t0=performance.now();
+ function hud(){raf=0;const k=scrollY/st.offsetHeight;
+  vf.style.opacity=(1-ss(7.45,7.9,k)).toFixed(3);vf.style.visibility=k>7.95?'hidden':'visible';}
+ addEventListener('scroll',()=>{if(!raf)raf=requestAnimationFrame(hud);},{passive:true});hud();
+ setInterval(()=>{const s=Math.floor((performance.now()-t0)/1000);$('tc').textContent=[s/3600|0,(s/60|0)%60,s%60].map(x=>String(x).padStart(2,'0')).join(':');},1000);
+ if(typeof THREE==='undefined')document.body.classList.add('no3d');})();
+</script>
+<script>if(window.THREE){/* Khurafati T26 viewfinder: lens rings float out of focus with soft bokeh, snap into one tunnel, you glide through it,
+   then the last three rings land on the phone as it rises in. The phone then turns to show its screen and gently poses
+   for the rest of the spec chapters, with a soft glow behind it. Timeline is stretched over 7 screens for a calmer pace. */
+V.ready([],()=>{
+const S=V.init({bg:0x0a0c18,envTint:0xf2c46d,rim:0x8ea2ff,rimI:1.2,hemi:.35,key:1.1,maxPR:1.6});if(!S)return;
+S.maxK=8.6;
+/* the phone part plays slowly even if you scroll fast */
+/* smooth spring on scroll progress: gentle everywhere, extra slow through the phone flips and zooms */
+/* follows the scroll closely, with just enough easing to stay smooth; the phone part is a touch gentler */
+/* Follows slow scrolling closely. On a fast fling the 3D is capped to a steady pace (max speed + max acceleration),
+   so every move stays visible and it glides to a stop instead of jumping. */
+if(location.hash!=='#snap'){const ph=k=>k>2.6&&k<7.2;S.spring=k=>ph(k)?4.5:5.5;S.vmax=k=>ph(k)?1.15:1.6;S.amax=k=>ph(k)?2.8:3.6;}
+S.onPR=p=>{BU&&(BU.uPR.value=p);};
+const {ss,ease,lerp,lin}=V;
+let seed=4;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
+/* rings */
+const N=14,R=[];
+const tg=new THREE.TorusGeometry(.5,.034,14,72),ig=new THREE.TorusGeometry(.43,.011,8,72),dg=new THREE.CircleGeometry(.42,56);
+const kc=document.createElement('canvas');kc.width=512;kc.height=16;const kx=kc.getContext('2d');kx.fillStyle='#1b1c19';kx.fillRect(0,0,512,16);for(let i=0;i<512;i+=6){kx.fillStyle='#34362f';kx.fillRect(i,0,3,16);}
+const kt=new THREE.CanvasTexture(kc);kt.wrapS=THREE.RepeatWrapping;kt.repeat.x=4;
+const kg=new THREE.CylinderGeometry(.53,.53,.09,72,1,true);kg.rotateX(Math.PI/2);
+const metal=new THREE.MeshStandardMaterial({color:lin('#d9d1c1'),metalness:1,roughness:.26});
+const sage=new THREE.MeshStandardMaterial({color:lin('#8ea2ff'),metalness:.3,roughness:.4,emissive:lin('#8ea2ff'),emissiveIntensity:.35});
+const sand=new THREE.MeshStandardMaterial({color:lin('#f2c46d'),metalness:.6,roughness:.3,emissive:lin('#f2c46d'),emissiveIntensity:.15});
+const knurl=new THREE.MeshStandardMaterial({map:kt,metalness:.3,roughness:.6,side:THREE.DoubleSide});
+const glass=new THREE.MeshStandardMaterial({color:0x101812,metalness:1,roughness:.05,transparent:true,opacity:.42,side:THREE.DoubleSide,depthWrite:false});
+for(let i=0;i<N;i++){const g=new THREE.Group();g.add(new THREE.Mesh(tg,metal));const ir=new THREE.Mesh(ig,i%3?sage:sand);ir.position.z=.015;g.add(ir);
+ if(i%4===1)g.add(new THREE.Mesh(kg,knurl));const d=new THREE.Mesh(dg,glass);g.add(d);
+ g.userData={ox:(rnd()*2-1)*1.9,oy:(rnd()*2-1)*1.2,rx:(rnd()*2-1)*1.1,ry:(rnd()*2-1)*1.1,sp:rnd()<.5?-1:1,ph:rnd()*6.28};S.scene.add(g);R.push(g);}
+/* hexagon bokeh */
+const BN=S.mob?70:130,bp=new Float32Array(BN*3),bs=new Float32Array(BN*2);
+for(let i=0;i<BN;i++){bp[i*3]=(rnd()*2-1)*15;bp[i*3+1]=(rnd()*2-1)*8;bp[i*3+2]=-8-rnd()*16;bs[i*2]=.5+rnd();bs[i*2+1]=rnd();}
+const bg=new THREE.BufferGeometry();bg.setAttribute('position',new THREE.BufferAttribute(bp,3));bg.setAttribute('aS',new THREE.BufferAttribute(bs,2));
+const BU={uF:{value:0},uPR:{value:S.r.getPixelRatio()},uT:{value:0},uDrift:{value:0}};
+const bm=new THREE.ShaderMaterial({uniforms:BU,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
+ vertexShader:`attribute vec2 aS;uniform float uF,uPR,uT,uDrift;varying float vT;varying float vB;
+ void main(){vec3 p=position;p.x+=sin(uT*.1+aS.y*6.)*.4;p.y+=cos(uT*.12+aS.y*5.)*.3;p.z+=uDrift;vec4 mv=modelViewMatrix*vec4(p,1.);gl_Position=projectionMatrix*mv;
+  gl_PointSize=aS.x*uPR*mix(72.,9.,uF)*(12./-mv.z);vT=aS.y;vB=1.-uF;}`,
+ fragmentShader:`varying float vT;varying float vB;
+ void main(){vec2 p=abs(gl_PointCoord-.5)*2.;float d=max(p.x*.866+p.y*.5,p.y);float e=mix(.08,.35,vB);
+  float a=smoothstep(1.,1.-e,d);a*=mix(1.,.55+.6*smoothstep(.55,.95,d),vB);
+  vec3 c=mix(vec3(0.95,0.77,0.43),vec3(0.56,0.64,1.00),step(.5,vT));c=mix(c,vec3(1.00,0.48,0.54),step(.85,vT));
+  float br=mix(.9,.22,vB);gl_FragColor=vec4(c*a*br,a*br);}`});
+const bokeh=new THREE.Points(bg,bm);bokeh.frustumCulled=false;S.scene.add(bokeh);
+/* soft glow behind the phone */
+const gc=document.createElement('canvas');gc.width=gc.height=256;{const g=gc.getContext('2d');const rg=g.createRadialGradient(128,128,0,128,128,128);rg.addColorStop(0,'rgba(242,196,109,.9)');rg.addColorStop(.35,'rgba(142,162,255,.35)');rg.addColorStop(1,'rgba(142,162,255,0)');g.fillStyle=rg;g.fillRect(0,0,256,256);}
+const halo=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(gc),blending:THREE.AdditiveBlending,depthWrite:false,transparent:true,opacity:0}));S.scene.add(halo);
+/* phone: original flagship look, flat metal sides, thin bezels, centred punch-hole */
+function shot(g,w,h){SHOTS.night(g,w,h);SHOTS.caption(g,w,h,'Old City, 11:04 PM','Shot on Khurafati T26');}
+const ph=V.phone({col:['#3b3d38','#1b1c1a'],metal:.35,rough:.45,frame:'#f2c46d',screen:shot});S.scene.add(ph);
+ph.userData.lensMeshes.forEach(a=>a.forEach(m=>m.visible=false));
+/* ---------- opened back: cover lifts off and shows the parts inside ---------- */
+function tex(w,h,draw){const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'),w,h);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.anisotropy=8;return t;}
+function rrp(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();}
+const BZ=-V.PD/2;                                  // back surface (local z)
+const inner=new THREE.Group();ph.add(inner);
+const M=(o)=>new THREE.MeshStandardMaterial(Object.assign({roughness:.5,metalness:.3},o));
+const faceBox=(w,h,d,map,side,extra)=>{const sm=M({color:lin(side)});return new THREE.Mesh(new THREE.BoxGeometry(w,h,d),[sm,sm,sm,sm,sm,M(Object.assign({map},extra||{}))]);};
+/* midframe (the inside floor of the phone) */
+const mid=new THREE.Mesh(new THREE.ShapeGeometry(V.rr(V.PW-.03,V.PH-.03,.1),10),M({color:lin('#2a2b2e'),metalness:.75,roughness:.35}));mid.rotation.y=Math.PI;mid.position.z=BZ-.003;inner.add(mid);
+/* mainboard */
+const pcbT=tex(512,420,(g,w,h)=>{g.fillStyle='#0f2018';g.fillRect(0,0,w,h);g.strokeStyle='rgba(214,178,94,.55)';g.lineWidth=2;
+ for(let i=0;i<46;i++){g.beginPath();let x=Math.random()*w,y=Math.random()*h;g.moveTo(x,y);for(let j=0;j<4;j++){if(j%2)x+=(Math.random()-.5)*160;else y+=(Math.random()-.5)*120;g.lineTo(x,y);}g.stroke();}
+ for(let i=0;i<26;i++){const cw=10+Math.random()*44,chh=8+Math.random()*30;g.fillStyle=Math.random()<.5?'#141416':'#2b2d31';g.fillRect(Math.random()*(w-cw),Math.random()*(h-chh),cw,chh);}
+ for(let i=0;i<70;i++){g.fillStyle=['#c9a35a','#b9bcc2','#6b4a2a'][i%3];g.fillRect(Math.random()*w,Math.random()*h,5,3);}
+ g.fillStyle='#9aa0a8';rrp(g,30,40,150,110,8);g.fill();g.fillStyle='rgba(0,0,0,.25)';for(let i=0;i<9;i++)g.fillRect(40,52+i*10,130,3);   // RF shield
+ g.fillStyle='#d6b25e';for(let i=0;i<4;i++){g.beginPath();g.arc([16,w-16,16,w-16][i],[16,16,h-16,h-16][i],7,0,7);g.fill();}});
+const pcb=faceBox(.7,.58,.012,pcbT,'#0b1510',{roughness:.6,metalness:.2});pcb.position.set(0,.47,BZ-.01);inner.add(pcb);
+/* the chip */
+const chipT=tex(512,512,(g,w,h)=>{const gr=g.createLinearGradient(0,0,w,h);gr.addColorStop(0,'#e0323c');gr.addColorStop(1,'#8e0f19');g.fillStyle=gr;g.fillRect(0,0,w,h);
+ g.fillStyle='#e6c27a';for(let i=0;i<16;i++){const p=40+i*27;g.fillRect(p,10,12,22);g.fillRect(p,480,12,22);g.fillRect(10,p,22,12);g.fillRect(480,p,22,12);}
+ g.strokeStyle='rgba(255,255,255,.35)';g.lineWidth=3;g.strokeRect(60,60,392,392);
+ g.fillStyle='#fff';g.textAlign='center';g.font='600 52px Helvetica,Arial,sans-serif';g.fillText('Snapdragon',256,230);
+ g.font='800 120px Helvetica,Arial,sans-serif';g.fillText('8',200,360);g.font='700 54px Helvetica,Arial,sans-serif';g.fillText('Elite',316,345);
+ g.globalAlpha=.6;g.font='500 22px Helvetica,Arial,sans-serif';g.fillText('3 nm  ·  octa-core',256,410);g.globalAlpha=1;});
+const chip=faceBox(.24,.24,.02,chipT,'#5a0a10',{metalness:.25,roughness:.32,emissive:0xffffff,emissiveMap:chipT,emissiveIntensity:.16});chip.position.set(.16,.38,BZ-.02);inner.add(chip);
+const rc=document.createElement('canvas');rc.width=rc.height=128;{const g=rc.getContext('2d');const rg=g.createRadialGradient(64,64,0,64,64,64);rg.addColorStop(0,'rgba(255,70,70,.9)');rg.addColorStop(1,'rgba(255,40,40,0)');g.fillStyle=rg;g.fillRect(0,0,128,128);}
+const rglow=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(rc),blending:THREE.AdditiveBlending,depthWrite:false,transparent:true,opacity:0}));rglow.position.set(.16,.38,BZ-.015);inner.add(rglow);
+/* vapour chamber */
+const vcT=tex(256,200,(g,w,h)=>{const gr=g.createLinearGradient(0,0,w,h);gr.addColorStop(0,'#d58a52');gr.addColorStop(.5,'#f1b07a');gr.addColorStop(1,'#a8622f');g.fillStyle=gr;g.fillRect(0,0,w,h);
+ g.strokeStyle='rgba(90,40,10,.25)';for(let i=0;i<w;i+=10){g.beginPath();g.moveTo(i,0);g.lineTo(i,h);g.stroke();}g.fillStyle='rgba(255,255,255,.25)';g.fillRect(0,h*.2,w,6);});
+const vc=faceBox(.44,.2,.006,vcT,'#8a4f25',{metalness:.85,roughness:.28});vc.position.set(.02,.07,BZ-.008);inner.add(vc);
+/* battery */
+const batT=tex(400,480,(g,w,h)=>{g.fillStyle='#1c1d21';g.fillRect(0,0,w,h);g.fillStyle='#b8bcc4';rrp(g,34,40,w-68,h-80,14);g.fill();
+ g.fillStyle='#1c1d21';g.font='800 64px Helvetica,Arial,sans-serif';g.textAlign='center';g.fillText('5,500',w/2,h*.42);g.font='700 30px Helvetica,Arial,sans-serif';g.fillText('mAh',w/2,h*.42+40);
+ g.font='500 18px Helvetica,Arial,sans-serif';g.globalAlpha=.7;g.fillText('Li-ion polymer · 3.88 V',w/2,h*.66);g.fillText('Khurafati T26 · Zuno',w/2,h*.66+26);g.globalAlpha=1;
+ g.fillStyle='#ff7a8a';g.fillRect(w/2-40,h*.78,80,6);});
+const bat=faceBox(.62,.7,.03,batT,'#16171a',{metalness:.2,roughness:.55});bat.position.set(0,-.33,BZ-.017);inner.add(bat);
+/* speaker */
+const spT=tex(400,100,(g,w,h)=>{g.fillStyle='#202125';g.fillRect(0,0,w,h);g.fillStyle='#0a0a0c';for(let x=24;x<w-20;x+=14)for(let y=22;y<h-16;y+=14){g.beginPath();g.arc(x,y,3.4,0,7);g.fill();}});
+const spk=faceBox(.52,.12,.022,spT,'#1a1b1e');spk.position.set(0,-.75,BZ-.013);inner.add(spk);
+/* flex cables + screws */
+const flexM=M({color:lin('#c98a3a'),metalness:.2,roughness:.45});
+[[-.27,.12,.06,.16],[.26,.05,.05,.12],[0,-.65,.2,.04]].forEach(([x,y,w,h])=>{const f=new THREE.Mesh(new THREE.BoxGeometry(w,h,.004),flexM);f.position.set(x,y,BZ-.006);inner.add(f);});
+const scrM=M({color:lin('#c9ccd2'),metalness:1,roughness:.25});
+[[-.32,.73],[.32,.73],[-.32,.2],[.32,.2],[-.24,-.75],[.24,-.75]].forEach(([x,y])=>{const sc=new THREE.Mesh(new THREE.CylinderGeometry(.014,.014,.01,16),scrM);sc.rotation.x=Math.PI/2;sc.position.set(x,y,BZ-.02);inner.add(sc);});
+inner.visible=false;
+/* back cover: outside matches the phone, inside shows the wireless-charging coil */
+const coverG=new THREE.ExtrudeGeometry(V.rr(V.PW,V.PH,.11),{depth:.012,bevelEnabled:false,curveSegments:12});coverG.translate(0,0,-.012);
+const cover=new THREE.Group();ph.add(cover);
+const coverOut=new THREE.Mesh(coverG,ph.userData.bodyM);cover.add(coverOut);
+const coilT=tex(512,1076,(g,w,h)=>{g.fillStyle='#24252a';g.fillRect(0,0,w,h);const cx=w/2,cy=h*.55;g.strokeStyle='#d58a52';g.lineWidth=9;g.beginPath();
+ for(let a=0;a<Math.PI*2*11;a+=.05){const r=34+a*2.6;g.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);}g.stroke();g.fillStyle='#16171a';g.beginPath();g.arc(cx,cy,30,0,7);g.fill();
+ g.fillStyle='#9aa0a8';g.font='600 22px Helvetica,Arial,sans-serif';g.textAlign='center';g.fillText('Wireless charging · 50 W',cx,cy+260);
+ g.fillStyle='rgba(255,255,255,.08)';rrp(g,40,60,w*.42,h*.3,24);g.fill();});
+coilT.repeat.set(1/V.PW,1/V.PH);coilT.offset.set(.5,.5);
+const coverIn=new THREE.Mesh(new THREE.ShapeGeometry(V.rr(V.PW-.01,V.PH-.01,.105),10),M({map:coilT,roughness:.55,metalness:.3}));coverIn.position.z=.001;cover.add(coverIn);
+cover.visible=false;
+/* labels for the parts (HTML, placed on screen each frame) */
+const PARTS=[['Snapdragon 8 Elite',new THREE.Vector3(.16,.38,BZ-.03),1],['Vapour cooling',new THREE.Vector3(.02,.07,BZ-.012),0],['5,500 mAh battery',new THREE.Vector3(0,-.33,BZ-.035),0],['Stereo speaker',new THREE.Vector3(0,-.75,BZ-.025),0],['200 MP camera',new THREE.Vector3(-.15,.5,BZ-.06),0]];
+const lblWrap=document.getElementById('parts'),lbls=PARTS.map(p=>{const d=document.createElement('div');d.className='lbl'+(p[2]?' hot':'');d.innerHTML='<i></i><span>'+p[0]+'</span>';lblWrap&&lblWrap.appendChild(d);return d;});
+const coilLbl=document.createElement('div');coilLbl.className='lbl';coilLbl.innerHTML='<i></i><span>Wireless charging coil</span>';lblWrap&&lblWrap.appendChild(coilLbl);
+const pv3=new THREE.Vector3();
+function place(el,v,op){pv3.copy(v).project(S.cam);if(pv3.z>1){el.style.opacity=0;return;}const x=(pv3.x*.5+.5)*S.W,y=(-pv3.y*.5+.5)*S.H;
+ el.style.transform='translate3d('+x.toFixed(1)+'px,'+y.toFixed(1)+'px,0)';el.style.opacity=op.toFixed(3);}
+/* multitasking screen: app cards that keep sliding, redrawn live */
+const ac=document.createElement('canvas');ac.width=360;ac.height=756;const ag=ac.getContext('2d');
+const at=new THREE.CanvasTexture(ac);at.encoding=THREE.sRGBEncoding;at.anisotropy=4;at.repeat.copy(ph.userData.scM.map.repeat);at.offset.copy(ph.userData.scM.map.offset);
+const photoTex=ph.userData.scM.map;
+const mini=document.createElement('canvas');mini.width=220;mini.height=300;SHOTS.night(mini.getContext('2d'),220,300);
+const APPS=[['Chats','#5be0a8'],['Camera','#f2c46d'],['Racing','#ff7a8a'],['Music','#8ea2ff'],['Maps','#8fd3ff'],['Notes','#f3e6d8']];
+function rr2(x,y,w,h,r){ag.beginPath();ag.moveTo(x+r,y);ag.arcTo(x+w,y,x+w,y+h,r);ag.arcTo(x+w,y+h,x,y+h,r);ag.arcTo(x,y+h,x,y,r);ag.arcTo(x,y,x+w,y,r);ag.closePath();}
+function card(i,x,y,w,h){const [n,c]=APPS[i];ag.save();rr2(x,y,w,h,22);ag.fillStyle='#1b1c19';ag.fill();ag.clip();
+ if(n==='Chats'){ag.fillStyle='#232521';ag.fillRect(x,y,w,h);for(let j=0;j<6;j++){const me=j%2;ag.fillStyle=me?'#3d5a3a':'#2f312c';rr2(me?x+w*.35:x+14,y+70+j*58,w*.55,40,14);ag.fill();}}
+ else if(n==='Camera'){ag.drawImage(mini,x,y+46,w,h-46);ag.strokeStyle='rgba(255,255,255,.8)';ag.lineWidth=3;ag.beginPath();ag.arc(x+w/2,y+h-50,22,0,7);ag.stroke();}
+ else if(n==='Racing'){const g2=ag.createLinearGradient(0,y,0,y+h);g2.addColorStop(0,'#2b1a3a');g2.addColorStop(1,'#ff7a8a');ag.fillStyle=g2;ag.fillRect(x,y,w,h);ag.fillStyle='#16151a';ag.beginPath();ag.moveTo(x+w*.42,y+h*.4);ag.lineTo(x+w*.58,y+h*.4);ag.lineTo(x+w,y+h);ag.lineTo(x,y+h);ag.fill();ag.fillStyle='#fff';ag.font='700 26px Helvetica,Arial';ag.fillText('LAP 2/3',x+16,y+80);}
+ else if(n==='Music'){ag.fillStyle='#232521';ag.fillRect(x,y,w,h);const g2=ag.createLinearGradient(x,y,x+w,y+h);g2.addColorStop(0,'#8ea2ff');g2.addColorStop(1,'#3a5a4a');ag.fillStyle=g2;rr2(x+20,y+66,w-40,w-40,16);ag.fill();ag.fillStyle='#fff';ag.font='600 20px Helvetica,Arial';ag.fillText('Late night drive',x+20,y+w+56);ag.fillStyle='rgba(255,255,255,.25)';ag.fillRect(x+20,y+w+76,w-40,5);ag.fillStyle='#fff';ag.fillRect(x+20,y+w+76,(w-40)*.4,5);}
+ else if(n==='Maps'){ag.fillStyle='#1f2a2e';ag.fillRect(x,y,w,h);ag.strokeStyle='rgba(255,255,255,.12)';ag.lineWidth=8;for(let j=0;j<6;j++){ag.beginPath();ag.moveTo(x,y+60+j*60);ag.lineTo(x+w,y+30+j*70);ag.stroke();}ag.strokeStyle='#8fd3ff';ag.lineWidth=6;ag.beginPath();ag.moveTo(x+30,y+h-40);ag.bezierCurveTo(x+w*.2,y+h*.4,x+w*.8,y+h*.6,x+w-40,y+80);ag.stroke();}
+ else{ag.fillStyle='#f3e6d8';ag.fillRect(x,y,w,h);ag.fillStyle='rgba(0,0,0,.25)';for(let j=0;j<8;j++)ag.fillRect(x+18,y+70+j*34,w-36-(j*23)%60,9);}
+ ag.restore();ag.fillStyle=c;ag.beginPath();ag.arc(x+22,y-20,13,0,7);ag.fill();ag.fillStyle='#fff';ag.font='600 19px Helvetica,Arial,sans-serif';ag.textAlign='left';ag.fillText(n,x+44,y-13);}
+function drawApps(t){const W=360,H=756;const bg=ag.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#1d211c');bg.addColorStop(1,'#0c0d0b');ag.fillStyle=bg;ag.fillRect(0,0,W,H);
+ ag.fillStyle='#000';ag.beginPath();ag.arc(180,26,10,0,7);ag.fill();
+ ag.fillStyle='#eceefe';ag.textAlign='center';ag.font='600 22px Helvetica,Arial,sans-serif';ag.fillText('6 apps open',180,92);
+ ag.fillStyle='rgba(142,162,255,.18)';rr2(98,108,164,30,15);ag.fill();ag.fillStyle='#8ea2ff';ag.font='600 14px Helvetica,Arial,sans-serif';ag.fillText('12 GB RAM · no lag',180,128);
+ const cw=210,chh=430,gap=26,step=cw+gap,off=(t*42)%(step*APPS.length);
+ for(let i=-1;i<APPS.length+2;i++){const idx=((i%APPS.length)+APPS.length)%APPS.length;const x=W/2-cw/2+i*step-off+step;const dc=Math.abs(x+cw/2-W/2)/step;const sc=1-Math.min(1,dc)*.12;
+  const w=cw*sc,h=chh*sc;card(idx,x+(cw-w)/2,210+(chh-h)/2,w,h);}
+ for(let i=0;i<4;i++){ag.fillStyle=APPS[i][1];ag.globalAlpha=.85;rr2(52+i*70,672,48,48,14);ag.fill();}ag.globalAlpha=1;
+ ag.fillStyle='rgba(255,255,255,.4)';rr2(130,738,100,5,3);ag.fill();at.needsUpdate=true;}
+/* colour variants: picking one gives the phone a slow 360 turn while the colour changes */
+const VARS=[['#3b3d38','#1b1c1a','#f2c46d'],['#a8c3a0','#5f7a58','#dfe8d8'],['#d8b98a','#9c7a4c','#f0dcc0'],['#e07a5f','#a3452f','#f3c9b8']];
+const cBody=new THREE.Color(),cMod=new THREE.Color(),cFrame=new THREE.Color(),fromB=new THREE.Color(),fromM=new THREE.Color(),fromF=new THREE.Color(),toB=new THREE.Color(),toM=new THREE.Color(),toF=new THREE.Color();
+const bodyOf=(v,o)=>o.copy(lin(v[0])).lerp(lin(v[1]),.4),modOf=(v,o)=>bodyOf(v,o).multiplyScalar(.75),frameOf=(v,o)=>o.copy(lin(v[2])).lerp(new THREE.Color(1,1,1),.25);
+bodyOf(VARS[0],toB);modOf(VARS[0],toM);frameOf(VARS[0],toF);fromB.copy(toB);fromM.copy(toM);fromF.copy(toF);
+let fr_=0,curVar=0,spinT0=-99,SPIN=4.2;
+addEventListener('vf-colour',ev=>{const i=ev.detail;if(i===curVar)return;fromB.copy(ph.userData.bodyM.color);fromM.copy(ph.userData.modM.color);fromF.copy(ph.userData.frameM.color);
+ curVar=i;bodyOf(VARS[i],toB);modOf(VARS[i],toM);frameOf(VARS[i],toF);spinT0=performance.now()/1000;});
+/* sound waves: arcs pulse out of the top and bottom speakers during the Dolby Atmos chapter */
+const waveM=[],waves=[];
+for(let side=0;side<2;side++)for(let i=0;i<4;i++){const m=new THREE.MeshBasicMaterial({color:lin(i%2?'#8ea2ff':'#f2c46d'),transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide});
+ const g=new THREE.RingGeometry(.3,.318,72,1,side?Math.PI*1.12:Math.PI*.12,Math.PI*.76);const w=new THREE.Mesh(g,m);
+ w.position.set(0,side?-V.PH/2-.04:V.PH/2+.04,V.PD/2+.01);w.visible=false;ph.add(w);waves.push({w,m,side,i});}
+const camP=new THREE.Vector3(),camL=new THREE.Vector3(),tP=new THREE.Vector3(),tL=new THREE.Vector3(),nrm=new THREE.Vector3();
+function closeup(local,dist,side,w,m,back){/* blend the camera toward a point on the phone */
+ if(w<=0)return;ph.localToWorld(tL.copy(local));nrm.set(0,0,back?-1:1).applyQuaternion(ph.quaternion);
+ tP.copy(tL).addScaledVector(nrm,dist);const sx=0,sy=0;tP.x+=sx;tP.y+=sy;const lx=tL.x+sx,ly=tL.y+sy;
+ camP.lerp(tP,w);camL.x=lerp(camL.x,lx,w);camL.y=lerp(camL.y,ly,w);camL.z=lerp(camL.z,tL.z,w);}
+const e=new THREE.Euler(),q0=new THREE.Quaternion(),q1=new THREE.Quaternion(),q2=new THREE.Quaternion(),flip=new THREE.Quaternion().setFromEuler(new THREE.Euler(0,Math.PI,0)),
+ a=new THREE.Vector3(),b=new THREE.Vector3(),c=new THREE.Vector3();
+V.loop(S,(t,k)=>{const m=S.mob;
+ const A=ease(.08,.95,k),F=ease(.9,2.2,k),B=ease(2.05,2.55,k),C=ease(2.45,2.8,k),D=ease(4.2,4.55,k),E=ease(5.55,5.9,k);
+ const W1=ease(3.65,4.0,k)*(1-ease(4.3,4.55,k)),W2=ease(4.4,4.75,k)*(1-ease(5.4,5.7,k)),W3=ease(5.8,6.1,k)*(1-ease(6.45,6.8,k)),zoomed=Math.max(W1,W2,W3);
+ const cx=0,cy=.35,camZ=m?17:13,sp=2.3,psc=m?1.2:1.8;
+ BU.uT.value=t;BU.uF.value=Math.min(1,A*1.1)*(1-B*.3);BU.uDrift.value=F*6;
+ /* phone rises in from below (no popping), turns to show its screen, then poses */
+ ph.visible=B>.001;ph.scale.setScalar(psc);
+ const SV=ease(2.8,3.0,k)*(1-ease(3.45,3.62,k));
+ waves.forEach(o=>{o.w.visible=SV>.01;if(!o.w.visible)return;const ph_=(t*.55+o.i/4)%1;o.w.scale.setScalar(.35+ph_*1.9);o.m.opacity=SV*(1-ph_)*(1-ph_)*.9;});
+ const calm=1-zoomed,sway=Math.sin(t*.45)*.05*calm;
+  const px=cx+Math.sin(t*71)*.006*SV,py=lerp(cy-6,cy,B)+Math.sin(t*1.1)*.035*calm+Math.sin(t*83)*.005*SV;
+ ph.position.set(px,py,0);
+ const Kc=ease(6.55,7.0,k),now=performance.now()/1000,sp_=Math.min(1,Math.max(0,(now-spinT0)/SPIN)),spinE=sp_<.5?4*sp_*sp_*sp_:1-Math.pow(-2*sp_+2,3)/2;
+ const mixC=ss(.25,.75,sp_);ph.userData.bodyM.color.copy(fromB).lerp(toB,mixC);ph.userData.modM.color.copy(fromM).lerp(toM,mixC);ph.userData.frameM.color.copy(fromF).lerp(toF,mixC);
+ const ry=Math.PI-.32+C*(Math.PI+.32)+D*Math.PI+E*Math.PI+sway+Kc*-.35+spinE*Math.PI*2;
+ ph.rotation.set(-.05*calm,ry,.03*calm);ph.updateMatrixWorld(true);
+ /* processor chapter: back cover lifts off, the chip rises and the parts get labels */
+ const inOn=k>4.32&&k<5.72,OP=ease(4.5,4.85,k)*(1-ease(5.28,5.55,k)),CR=ease(4.78,5.05,k)*(1-ease(5.2,5.4,k)),LB=ease(4.85,5.1,k)*(1-ease(5.18,5.32,k));
+ inner.visible=cover.visible=inOn;
+ if(inOn){const cz=BZ-.034;if(m)cover.position.set(-OP*(V.PW+1.4),OP*.1,cz-OP*.5);else cover.position.set(-OP*(V.PW+.3),-OP*.04,cz-OP*.25);
+  cover.rotation.set(0,OP*Math.PI,m?OP*.12:OP*.04);
+  chip.position.z=BZ-.02-CR*.1;chip.scale.setScalar(1+CR*.25);rglow.scale.setScalar(.9*CR+.001);rglow.material.opacity=CR*.75;}
+ const showL=inOn&&LB>.01;lblWrap&&(lblWrap.style.visibility=showL?'visible':'hidden');
+ if(showL){PARTS.forEach((p,i)=>{ph.localToWorld(tL.copy(p[1]));place(lbls[i],tL,LB);});cover.localToWorld(tL.set(0,-.12,.002));place(coilLbl,tL,m?0:LB*ease(4.7,4.9,k));}
+ /* screen: photo first, then the live multitasking view (swapped while the screen faces away) */
+ const appsOn=k>5.45;const want=appsOn?at:photoTex;if(ph.userData.scM.map!==want){ph.userData.scM.map=want;}if(appsOn&&k<7.3&&(W3>.01||k>6.4)){fr_=(fr_+1)%2;if(!fr_)drawApps(t);}
+ halo.position.set(px,py,-1.2);halo.scale.setScalar((m?6:8)*(1+Math.sin(t*.8)*.03));halo.material.opacity=B*.55*(1-zoomed*.7);
+ const fly=F*(N-3.4)*sp;
+ for(let i=0;i<N;i++){const g=R[i],u=g.userData;
+  const z=3-i*sp+fly;
+  a.set(cx+(m?0:.9)+u.ox*(m?.8:.85),cy+u.oy*(m?.9:1),z);e.set(u.rx+Math.sin(t*.35+u.ph)*.12,u.ry+Math.cos(t*.3+u.ph)*.12,t*.12*u.sp);q0.setFromEuler(e);
+  b.set(cx+Math.sin(z*.13+t*.2)*.18*F,cy+Math.cos(z*.11)*.1*F,z);e.set(0,0,i*.26+t*.12*u.sp);q1.setFromEuler(e);
+  const near=Math.max(0,z-(camZ-9));const s1=z>camZ-1.2?0:(m?1.9:2.35)*(1+near*near*.2);
+  const lens=N-1-i;let s2=0;
+  if(lens<3){ph.localToWorld(c.copy(ph.userData.lens[lens]));q2.copy(ph.quaternion).multiply(flip);s2=.168*psc;}
+  else{c.copy(b);q2.copy(q1);}
+  g.position.copy(a).lerp(b,A).lerp(c,B);g.quaternion.copy(q0).slerp(q1,A).slerp(q2,B);
+  const sc=lerp(s1,s2,B);g.scale.setScalar(Math.max(.001,sc));g.visible=sc>.01;}
+ camP.set(0,cy*.6,camZ);camL.set(0,cy*.85,0);
+ closeup(tP.set(V.PW/2-.1,V.PH/2-.14,V.PD/2),m?2.6:1.35,-.45,W1,m,false);
+ closeup(tP.set(m?0:-.78,m?-.2:-.05,BZ-.05),m?11.5:9.6*Math.max(1,1.7/(S.W/S.H)),0,W2,m,true);
+ closeup(tP.set(0,0,V.PD/2),m?7.5:5.8,-.95,W3,m,false);
+ S.cam.position.copy(camP);S.cam.lookAt(camL);
+ /* composition: subject sits right of the text on wide screens, above the text on tall screens */
+ if(m)S.cam.setViewOffset(S.W,S.H,0,S.H*.27,S.W,S.H);else S.cam.setViewOffset(S.W,S.H,-S.W*.2,0,S.W,S.H);
+});});
+}</script>
